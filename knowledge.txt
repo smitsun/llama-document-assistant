@@ -1,0 +1,28 @@
+==================================================
+ACME CORPORATION - EMPLOYEE HANDBOOK & QUICK FACTS
+==================================================
+
+1. Working Hours & Location:
+- Core office hours are Monday through Friday, 9:00 AM to 5:00 PM EST.
+- The headquarters is located at 123 Innovation Way, Suite 400, Boston, MA.
+- Remote work is permitted on Tuesdays and Thursdays. Mondays, Wednesdays, and Fridays are in-office days.
+
+2. Office Wi-Fi:
+- Network Name (SSID): Acme_Secure_5G
+- Password: Smitsun16
+- Guest Network SSID: Acme_Guest (No password required, but internet speed is capped at 5 Mbps).
+
+3. Paid Time Off (PTO) & Holidays:
+- Standard employees receive 20 days of paid time off per calendar year.
+- Acme Corp observes 10 national holidays.
+- Unique Holiday: "Wile E. Coyote Day" is observed on October 14th as a paid day off to celebrate creativity and persistence despite failure.
+
+4. Expense Reimbursements:
+- Daily lunch stipend when working from the office: $15.
+- Gym memberships are reimbursed up to $50 per month under the Acme Wellness Program.
+- Expense reports must be submitted via the Acme Portal by the last Friday of every month.
+
+5. Key Contacts:
+- IT Support Hotline: Extension 404 (Email: support@acmecorp.internal)
+- HR Department: Extension 101 (Email: hr@acmecorp.internal)
+- Office Manager: Clara Higgins (Extension 102)

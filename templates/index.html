@@ -1,0 +1,1045 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Advanced internal AI assistant for Acme Corporation employees, powered by Meta Llama with PDF RAG and voice TTS.">
+    <title>AcmeCorp AI Assistant</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-main: #0B0F19;
+            --bg-sidebar: #111827;
+            --bg-card: #1F2937;
+            --text-main: #F3F4F6;
+            --text-muted: #9CA3AF;
+            --primary: #06B6D4; /* Cyan */
+            --primary-glow: rgba(6, 182, 212, 0.15);
+            --primary-gradient: linear-gradient(135deg, #06B6D4 0%, #3B82F6 100%);
+            --accent: #8B5CF6; /* Purple */
+            --danger: #EF4444; /* Red */
+            --border-color: rgba(255, 255, 255, 0.08);
+            --font-outfit: 'Outfit', sans-serif;
+            --font-inter: 'Inter', sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-inter);
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            height: 100vh;
+            display: flex;
+            overflow: hidden;
+        }
+
+        .app-container {
+            display: flex;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        /* Sidebar Styling */
+        aside.sidebar {
+            width: 340px;
+            background-color: var(--bg-sidebar);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 10;
+        }
+
+        .sidebar-header {
+            padding: 24px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .sidebar-header h2 {
+            font-family: var(--font-outfit);
+            font-size: 1.2rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .sidebar-content {
+            padding: 20px;
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* Drag and Drop Zone */
+        .upload-zone {
+            border: 2px dashed rgba(6, 182, 212, 0.3);
+            background-color: rgba(6, 182, 212, 0.02);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .upload-zone:hover, .upload-zone.dragover {
+            border-color: var(--primary);
+            background-color: rgba(6, 182, 212, 0.06);
+            box-shadow: 0 0 12px var(--primary-glow);
+        }
+
+        .upload-zone svg {
+            width: 32px;
+            height: 32px;
+            fill: var(--primary);
+        }
+
+        .upload-zone p {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .upload-zone span {
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--primary);
+        }
+
+        /* File List items */
+        .section-title {
+            font-family: var(--font-outfit);
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .files-list-container {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .file-item {
+            background-color: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 10px 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            transition: background 0.15s ease;
+        }
+
+        .file-item:hover {
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+
+        .file-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex: 1;
+            min-width: 0;
+            cursor: pointer;
+        }
+
+        .file-icon svg {
+            width: 18px;
+            height: 18px;
+            fill: var(--text-muted);
+        }
+
+        .file-name {
+            font-size: 0.85rem;
+            font-weight: 500;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            color: var(--text-main);
+        }
+
+        .file-size {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .btn-delete-file {
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-delete-file:hover {
+            background-color: rgba(239, 68, 68, 0.1);
+        }
+
+        .btn-delete-file svg {
+            width: 16px;
+            height: 16px;
+            fill: var(--danger);
+        }
+
+        /* File Content Viewer (Inside Sidebar) */
+        .file-content-view {
+            display: none;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .back-bar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 12px;
+        }
+
+        .btn-back {
+            background: transparent;
+            border: none;
+            color: var(--primary);
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .file-content-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-main);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .doc-container {
+            background-color: rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 14px;
+            font-size: 0.85rem;
+            line-height: 1.5;
+            color: #D1D5DB;
+            white-space: pre-wrap;
+            font-family: 'Courier New', Courier, monospace;
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        /* Main Chat Section */
+        main.chat-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background-color: var(--bg-main);
+            position: relative;
+        }
+
+        header.chat-header {
+            height: 70px;
+            border-bottom: 1px solid var(--border-color);
+            padding: 0 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background-color: rgba(11, 15, 25, 0.8);
+            backdrop-filter: blur(8px);
+        }
+
+        .header-title-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .status-dot-container {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            padding: 4px 10px;
+            border-radius: 9999px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background-color: #10B981;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        .status-text {
+            font-size: 0.75rem;
+            color: #34D399;
+            font-weight: 500;
+        }
+
+        header.chat-header h1 {
+            font-family: var(--font-outfit);
+            font-size: 1.3rem;
+            font-weight: 600;
+        }
+
+        /* Chat Messages List */
+        .messages-list {
+            flex: 1;
+            padding: 24px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* Chat Message Styling */
+        .message-row {
+            display: flex;
+            width: 100%;
+        }
+
+        .message-row.user {
+            justify-content: flex-end;
+        }
+
+        .message-bubble {
+            max-width: 70%;
+            padding: 14px 18px;
+            border-radius: 16px;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            position: relative;
+            animation: fadeIn 0.25s ease-out;
+        }
+
+        .message-row.user .message-bubble {
+            background: var(--primary-gradient);
+            color: #FFFFFF;
+            border-bottom-right-radius: 4px;
+        }
+
+        .message-row.assistant .message-bubble {
+            background-color: var(--bg-card);
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+            border-bottom-left-radius: 4px;
+            padding-bottom: 40px; /* Space for the TTS speaker button */
+        }
+
+        /* TTS Speaker button styling */
+        .btn-speak {
+            position: absolute;
+            bottom: 8px;
+            right: 12px;
+            background-color: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            border-radius: 50%;
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .btn-speak:hover {
+            background-color: rgba(6, 182, 212, 0.1);
+            border-color: var(--primary);
+        }
+
+        .btn-speak svg {
+            width: 14px;
+            height: 14px;
+            fill: var(--text-muted);
+            transition: fill 0.15s ease;
+        }
+
+        .btn-speak:hover svg, .btn-speak.speaking svg {
+            fill: var(--primary);
+        }
+
+        /* Markdown styling inside bubbles */
+        .message-bubble p {
+            margin-bottom: 8px;
+        }
+        .message-bubble p:last-child {
+            margin-bottom: 0;
+        }
+        .message-bubble ul, .message-bubble ol {
+            margin-left: 20px;
+            margin-bottom: 8px;
+        }
+        .message-bubble code {
+            font-family: monospace;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 2px 5px;
+            border-radius: 4px;
+            font-size: 0.85em;
+        }
+        .message-bubble pre {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 12px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 8px 0;
+        }
+        .message-bubble pre code {
+            background: transparent;
+            padding: 0;
+            font-size: 0.85rem;
+        }
+
+        /* Chat Input Container */
+        .input-outer-container {
+            padding: 20px 24px 30px;
+            background-color: var(--bg-main);
+        }
+
+        .input-inner-container {
+            position: relative;
+            background-color: var(--bg-sidebar);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            padding: 6px 12px;
+            transition: all 0.2s ease;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+        }
+
+        .input-inner-container:focus-within {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-glow);
+        }
+
+        #chat-input-text {
+            flex: 1;
+            background: transparent;
+            border: none;
+            outline: none;
+            color: var(--text-main);
+            padding: 12px 8px;
+            font-size: 0.95rem;
+            font-family: var(--font-inter);
+        }
+
+        #chat-input-text::placeholder {
+            color: var(--text-muted);
+        }
+
+        #btn-send-message {
+            background: var(--primary-gradient);
+            border: none;
+            outline: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: transform 0.15s ease, opacity 0.15s ease;
+        }
+
+        #btn-send-message:hover {
+            transform: scale(1.05);
+            opacity: 0.95;
+        }
+
+        #btn-send-message:active {
+            transform: scale(0.95);
+        }
+
+        #btn-send-message svg {
+            width: 18px;
+            height: 18px;
+            fill: white;
+        }
+
+        /* Typing indicator styling */
+        .typing-indicator {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 8px;
+        }
+
+        .typing-dot {
+            width: 6px;
+            height: 6px;
+            background-color: var(--text-muted);
+            border-radius: 50%;
+            animation: bounce 1.4s infinite ease-in-out both;
+        }
+
+        .typing-dot:nth-child(1) { animation-delay: -0.32s; }
+        .typing-dot:nth-child(2) { animation-delay: -0.16s; }
+
+        /* Scrollbar Styling */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(0.95);
+                box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+            }
+            70% {
+                transform: scale(1);
+                box-shadow: 0 0 0 6px rgba(16, 185, 129, 0);
+            }
+            100% {
+                transform: scale(0.95);
+                box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(8px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes bounce {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1.0); }
+        }
+
+        @media (max-width: 768px) {
+            aside.sidebar {
+                display: none;
+            }
+            .message-bubble {
+                max-width: 85%;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        
+        <!-- Sidebar containing Document RAG Management -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2>AcmeCorp RAG Portal</h2>
+                <span class="doc-badge">Meta Llama</span>
+            </div>
+            
+            <!-- Standard view: Files List & Drag-and-drop -->
+            <div class="sidebar-content" id="sidebar-main-view">
+                <div>
+                    <h3 class="section-title">Upload Documents</h3>
+                    <div class="upload-zone" id="drop-zone" onclick="triggerFileInput()">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/>
+                        </svg>
+                        <span>Click or Drag File Here</span>
+                        <p>Supports .txt, .pdf</p>
+                        <input type="file" id="file-input" style="display: none;" accept=".txt,.pdf" onchange="handleFileSelect(event)">
+                    </div>
+                </div>
+
+                <div style="flex: 1; display: flex; flex-direction: column; min-height: 0;">
+                    <h3 class="section-title">Knowledge Base Files</h3>
+                    <div class="files-list-container" id="files-list" style="overflow-y: auto; flex: 1;">
+                        <!-- Dynamically filled with file items -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detail view: File content view -->
+            <div class="sidebar-content" id="sidebar-detail-view" style="display: none;">
+                <div class="file-content-view">
+                    <div class="back-bar">
+                        <button class="btn-back" onclick="showFilesList()">
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+                                <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+                            </svg>
+                            Back
+                        </button>
+                        <span class="file-content-title" id="detail-title">file_name.txt</span>
+                    </div>
+                    <div class="doc-container" id="detail-box">Loading file contents...</div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Chat Area -->
+        <main class="chat-area">
+            
+            <!-- Header bar -->
+            <header class="chat-header">
+                <div class="header-title-container">
+                    <h1>Enterprise Document Assistant</h1>
+                    <div class="status-dot-container">
+                        <div class="status-dot"></div>
+                        <span class="status-text">Llama Active</span>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Messages list -->
+            <section class="messages-list" id="chat-messages-container">
+                <!-- Initial greeting -->
+                <div class="message-row assistant">
+                    <div class="message-bubble">
+                        <p>Welcome! I am your <strong>Llama RAG Assistant</strong>.</p>
+                        <p>Upload your own <strong>PDF</strong> or <strong>TXT</strong> files in the sidebar, and I will search through them to answer your questions accurately.</p>
+                        <button class="btn-speak" title="Speak Response" onclick="toggleSpeak(this)">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Input bar -->
+            <footer class="input-outer-container">
+                <form id="chat-form" onsubmit="sendMessage(event)">
+                    <div class="input-inner-container">
+                        <input type="text" id="chat-input-text" autocomplete="off" placeholder="Ask a question about your documents..." required>
+                        <button type="submit" id="btn-send-message" aria-label="Send message">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+                            </svg>
+                        </button>
+                    </div>
+                </form>
+            </footer>
+
+        </main>
+
+    </div>
+
+    <script>
+        const messagesContainer = document.getElementById("chat-messages-container");
+        const chatInput = document.getElementById("chat-input-text");
+        const filesList = document.getElementById("files-list");
+        const sidebarMainView = document.getElementById("sidebar-main-view");
+        const sidebarDetailView = document.getElementById("sidebar-detail-view");
+        const detailTitle = document.getElementById("detail-title");
+        const detailBox = document.getElementById("detail-box");
+        const dropZone = document.getElementById("drop-zone");
+
+        let chatHistory = [];
+        let currentlySpeakingUtterance = null;
+        let activeSpeakerButton = null;
+
+        // Parse markdown logic
+        function parseMarkdown(text) {
+            let html = text;
+            html = html.replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>');
+            html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+            html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+            
+            const lines = html.split('\n');
+            let isInsideList = false;
+            let resultLines = [];
+            
+            for (let line of lines) {
+                if (line.trim().startsWith('- ') || line.trim().startsWith('* ')) {
+                    if (!isInsideList) {
+                        resultLines.push('<ul>');
+                        isInsideList = true;
+                    }
+                    resultLines.push(`<li>${line.trim().substring(2)}</li>`);
+                } else {
+                    if (isInsideList) {
+                        resultLines.push('</ul>');
+                        isInsideList = false;
+                    }
+                    resultLines.push(line);
+                }
+            }
+            if (isInsideList) {
+                resultLines.push('</ul>');
+            }
+            return resultLines.join('\n').replace(/\n/g, '<br>');
+        }
+
+        // Fetch list of files
+        async function fetchFiles() {
+            try {
+                const response = await fetch("/api/files");
+                const data = await response.json();
+                renderFilesList(data.files || []);
+            } catch (err) {
+                console.error("Error fetching files list:", err);
+            }
+        }
+
+        function renderFilesList(files) {
+            filesList.innerHTML = "";
+            if (files.length === 0) {
+                filesList.innerHTML = `<p style="font-size: 0.85rem; color: var(--text-muted); text-align: center; margin-top: 20px;">No files uploaded yet.</p>`;
+                return;
+            }
+
+            files.forEach(file => {
+                const item = document.createElement("div");
+                item.className = "file-item";
+
+                const info = document.createElement("div");
+                info.className = "file-info";
+                info.onclick = () => viewFile(file.name);
+
+                info.innerHTML = `
+                    <span class="file-icon">
+                        <svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
+                    </span>
+                    <div style="min-width: 0;">
+                        <div class="file-name" title="${file.name}">${file.name}</div>
+                        <div class="file-size">${file.size_display}</div>
+                    </div>
+                `;
+
+                const btnDelete = document.createElement("button");
+                btnDelete.className = "btn-delete-file";
+                btnDelete.title = "Delete File";
+                btnDelete.onclick = (e) => {
+                    e.stopPropagation();
+                    deleteFile(file.name);
+                };
+                btnDelete.innerHTML = `
+                    <svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+                `;
+
+                item.appendChild(info);
+                item.appendChild(btnDelete);
+                filesList.appendChild(item);
+            });
+        }
+
+        // View single file content in sidebar detail view
+        async function viewFile(name) {
+            sidebarMainView.style.display = "none";
+            sidebarDetailView.style.display = "flex";
+            detailTitle.textContent = name;
+            detailBox.textContent = "Loading content...";
+
+            try {
+                const response = await fetch(`/api/files/${encodeURIComponent(name)}/content`);
+                const data = await response.json();
+                if (data.content) {
+                    detailBox.textContent = data.content;
+                } else {
+                    detailBox.textContent = "Error: " + (data.error || "Could not read file");
+                }
+            } catch (err) {
+                detailBox.textContent = "Failed to fetch file content.";
+            }
+        }
+
+        function showFilesList() {
+            sidebarDetailView.style.display = "none";
+            sidebarMainView.style.display = "flex";
+        }
+
+        // Delete file
+        async function deleteFile(name) {
+            if (!confirm(`Are you sure you want to delete "${name}"?`)) return;
+            try {
+                const response = await fetch(`/api/files/${encodeURIComponent(name)}`, {
+                    method: "DELETE"
+                });
+                if (response.ok) {
+                    fetchFiles();
+                } else {
+                    const data = await response.json();
+                    alert("Delete failed: " + (data.error || "Unknown error"));
+                }
+            } catch (err) {
+                alert("Error deleting file.");
+            }
+        }
+
+        // Drag and Drop implementation
+        function triggerFileInput() {
+            document.getElementById("file-input").click();
+        }
+
+        async function handleFileSelect(event) {
+            const files = event.target.files;
+            if (files.length > 0) {
+                await uploadFile(files[0]);
+            }
+        }
+
+        // Drag events
+        ["dragenter", "dragover"].forEach(eventName => {
+            dropZone.addEventListener(eventName, (e) => {
+                e.preventDefault();
+                dropZone.classList.add("dragover");
+            }, false);
+        });
+
+        ["dragleave", "drop"].forEach(eventName => {
+            dropZone.addEventListener(eventName, (e) => {
+                e.preventDefault();
+                dropZone.classList.remove("dragover");
+            }, false);
+        });
+
+        dropZone.addEventListener("drop", async (e) => {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            if (files.length > 0) {
+                await uploadFile(files[0]);
+            }
+        });
+
+        // Upload file api
+        async function uploadFile(file) {
+            const formData = new FormData();
+            formData.append("file", file);
+
+            try {
+                const response = await fetch("/api/upload", {
+                    method: "POST",
+                    body: formData
+                });
+                const data = await response.json();
+                if (data.success) {
+                    fetchFiles();
+                } else {
+                    alert("Upload failed: " + (data.error || "Invalid file type"));
+                }
+            } catch (err) {
+                alert("Error uploading file.");
+            }
+        }
+
+        // Chat implementation
+        async function sendMessage(event) {
+            event.preventDefault();
+            
+            const promptText = chatInput.value.trim();
+            if (!promptText) return;
+
+            chatInput.value = "";
+            chatInput.disabled = true;
+
+            appendMessageRow(promptText, "user");
+            chatHistory.push({ role: "user", content: promptText });
+
+            const bubbleId = "ai-bubble-" + Date.now();
+            appendMessageRow('<div class="typing-indicator"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>', "assistant", bubbleId);
+            const bubbleEl = document.getElementById(bubbleId);
+
+            try {
+                const response = await fetch("/api/chat", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ messages: chatHistory })
+                });
+
+                if (!response.ok) throw new Error("API failed");
+
+                bubbleEl.innerHTML = "";
+
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder("utf-8");
+                let fullResponse = "";
+                let partialChunk = "";
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+
+                    const textChunk = decoder.decode(value, { stream: true });
+                    partialChunk += textChunk;
+
+                    const lines = partialChunk.split("\n\n");
+                    partialChunk = lines.pop();
+
+                    for (const line of lines) {
+                        if (line.startsWith("data: ")) {
+                            const dataText = line.substring(6);
+                            if (dataText) {
+                                fullResponse += dataText;
+                                bubbleEl.innerHTML = parseMarkdown(fullResponse);
+                                scrollChatToBottom();
+                            }
+                        }
+                    }
+                }
+
+                if (partialChunk.startsWith("data: ")) {
+                    const dataText = partialChunk.substring(6);
+                    fullResponse += dataText;
+                    bubbleEl.innerHTML = parseMarkdown(fullResponse);
+                }
+
+                // Add speaker button to the final bubble
+                const speakBtn = document.createElement("button");
+                speakBtn.className = "btn-speak";
+                speakBtn.title = "Speak Response";
+                speakBtn.onclick = () => toggleSpeak(speakBtn);
+                speakBtn.innerHTML = `
+                    <svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+                `;
+                bubbleEl.appendChild(speakBtn);
+
+                chatHistory.push({ role: "assistant", content: fullResponse });
+
+            } catch (error) {
+                console.error(error);
+                bubbleEl.innerHTML = `<span style="color: #EF4444; font-weight: 500;">[Error]: Failed to receive response from Llama server.</span>`;
+            } finally {
+                chatInput.disabled = false;
+                chatInput.focus();
+                scrollChatToBottom();
+            }
+        }
+
+        function appendMessageRow(htmlContent, sender, bubbleId = "") {
+            const row = document.createElement("div");
+            row.className = `message-row ${sender}`;
+            
+            const bubble = document.createElement("div");
+            bubble.className = "message-bubble";
+            if (bubbleId) bubble.id = bubbleId;
+            bubble.innerHTML = htmlContent;
+            
+            row.appendChild(bubble);
+            messagesContainer.appendChild(row);
+            scrollChatToBottom();
+            return row;
+        }
+
+        function scrollChatToBottom() {
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        // Web Speech API Text-to-Speech logic
+        function toggleSpeak(button) {
+            // Get the parent text content of the bubble (ignoring the speak button itself)
+            const bubble = button.parentElement;
+            
+            // Extract pure text (clone bubble, remove speaker button, get textContent)
+            const clonedBubble = bubble.cloneNode(true);
+            const speakBtns = clonedBubble.querySelectorAll(".btn-speak");
+            speakBtns.forEach(btn => btn.remove());
+            const textToSpeak = clonedBubble.textContent.trim();
+
+            // Check if already speaking
+            if (window.speechSynthesis.speaking) {
+                window.speechSynthesis.cancel();
+                
+                // If clicked button was the active speaker, we just stop
+                if (activeSpeakerButton === button) {
+                    button.classList.remove("speaking");
+                    button.innerHTML = `
+                        <svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+                    `;
+                    activeSpeakerButton = null;
+                    return;
+                }
+                
+                // If it was another speaker, reset the previous button's icon
+                if (activeSpeakerButton) {
+                    activeSpeakerButton.classList.remove("speaking");
+                    activeSpeakerButton.innerHTML = `
+                        <svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+                    `;
+                }
+            }
+
+            // Start speaking
+            const utterance = new SpeechSynthesisUtterance(textToSpeak);
+            
+            // Choose a nice Google/natural-sounding voice if available
+            const voices = window.speechSynthesis.getVoices();
+            // Look for standard English natural voices
+            const preferredVoice = voices.find(voice => 
+                (voice.lang.startsWith("en-") && voice.name.includes("Google")) || 
+                (voice.lang === "en-US" && voice.name.includes("Natural")) || 
+                voice.name.includes("Microsoft Zira") || 
+                voice.name.includes("Samantha")
+            );
+            if (preferredVoice) {
+                utterance.voice = preferredVoice;
+            }
+
+            utterance.rate = 1.0;
+            utterance.pitch = 1.0;
+
+            utterance.onend = () => {
+                button.classList.remove("speaking");
+                button.innerHTML = `
+                    <svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+                `;
+                activeSpeakerButton = null;
+            };
+
+            button.classList.add("speaking");
+            button.innerHTML = `
+                <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/></svg>
+            `;
+            
+            activeSpeakerButton = button;
+            window.speechSynthesis.speak(utterance);
+        }
+
+        // Initialize lists
+        fetchFiles();
+        
+        // Load voices in browser (sometimes asynchronous)
+        window.speechSynthesis.onvoiceschanged = () => {};
+    </script>
+</body>
+</html>
